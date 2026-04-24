@@ -67,7 +67,7 @@ const TAG_COLORS: Record<string, string> = {
   'VIP':        'bg-purple-600 text-white',
 };
 const FALLBACK_COLORS = ['bg-teal-500 text-white','bg-cyan-600 text-white','bg-indigo-500 text-white','bg-pink-500 text-white','bg-lime-600 text-white'];
-const tagColor = (t: string) => TAG_COLORS[t] ?? FALLBACK_COLORS[t.split('').reduce((a,c)=>a+c.charCodeAt(0),0)%FALLBACK_COLORS.length];
+const tagColor = (t: string) => TAG_COLORS[t] ?? FALLBACK_COLORS[t.split('').reduce((a,c) => a + c.charCodeAt(0), 0) % FALLBACK_COLORS.length];
 
 function getRibbonTag(tags: string | null): string | null {
   if (!tags) return null;
@@ -83,13 +83,13 @@ function tagPriority(tags: string | null): number {
 }
 function formatSalary(min: number | null, max: number | null): string {
   if (!min && !max) return 'THU NHẬP: THỎA THUẬN';
-  const fmt = (n: number) => n >= 1000 ? `${(n/1000).toFixed(n%1000===0?0:1)} TỶ` : `${n}`;
+  const fmt = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)} TỶ` : `${n}`;
   if (min && max) return `THU NHẬP ${fmt(min)} - ${fmt(max)} TRIỆU / THÁNG`;
   if (min) return `THU NHẬP TỪ ${fmt(min)} TRIỆU / THÁNG`;
   return `THU NHẬP ĐẾN ${fmt(max!)} TRIỆU / THÁNG`;
 }
 
-// ── Multi-check list (dùng chung cho sidebar & popup) ─────────────────────
+// ── MultiCheck ─────────────────────────────────────────────────────────────
 function MultiCheck({ label, options, selected, onChange }: {
   label: string; options: string[];
   selected: string[]; onChange: (v: string[]) => void;
@@ -99,7 +99,7 @@ function MultiCheck({ label, options, selected, onChange }: {
   return (
     <div>
       <p className="text-[10px] uppercase font-black text-gray-400 mb-1.5 tracking-widest">{label}</p>
-      <div className="space-y-1 max-h-36 overflow-y-auto scrollbar-thin pr-1">
+      <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
         {options.map(opt => (
           <label key={opt} className={`flex items-center gap-2 px-2 py-1 rounded-lg cursor-pointer text-[11px] transition ${selected.includes(opt) ? 'bg-orange-50 text-orange-700 font-bold' : 'text-gray-600 hover:bg-gray-50'}`}>
             <input type="checkbox" checked={selected.includes(opt)} onChange={() => toggle(opt)} className="w-3 h-3 rounded accent-orange-500" />
@@ -111,7 +111,7 @@ function MultiCheck({ label, options, selected, onChange }: {
   );
 }
 
-// ── Salary range input ─────────────────────────────────────────────────────
+// ── SalaryRange ─────────────────────────────────────────────────────────────
 function SalaryRange({ salaryMin, salaryMax, setSalaryMin, setSalaryMax, small }: {
   salaryMin: string; salaryMax: string;
   setSalaryMin: (v: string) => void; setSalaryMax: (v: string) => void;
@@ -149,9 +149,7 @@ function FilterSidebar({ show, filters, setFilters, cities }: {
             <span className="text-white font-black text-[10px] uppercase tracking-widest">Bộ lọc</span>
             <button onClick={reset} className="text-[9px] font-bold text-orange-200 hover:text-white underline">Xóa tất cả</button>
           </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
-
-            {/* Sắp xếp */}
+          <div className="flex-1 overflow-y-auto p-3 space-y-4">
             <div>
               <p className="text-[10px] uppercase font-black text-gray-400 mb-1.5 tracking-widest">Sắp xếp</p>
               <div className="space-y-1">
@@ -163,22 +161,13 @@ function FilterSidebar({ show, filters, setFilters, cities }: {
                 ))}
               </div>
             </div>
-
-            <MultiCheck label="Trạng thái" options={Object.keys(statusConfig)}
-              selected={filters.statuses} onChange={v => set({ statuses: v })} />
-
-            <MultiCheck label="Loại dự án" options={['Recruiting','Outsourcing']}
-              selected={filters.types} onChange={v => set({ types: v })} />
-
+            <MultiCheck label="Trạng thái" options={Object.keys(statusConfig)} selected={filters.statuses} onChange={v => set({ statuses: v })} />
+            <MultiCheck label="Loại dự án" options={['Recruiting','Outsourcing']} selected={filters.types} onChange={v => set({ types: v })} />
             {cities.length > 0 && (
-              <MultiCheck label="Tỉnh / Thành phố" options={cities}
-                selected={filters.cities} onChange={v => set({ cities: v })} />
+              <MultiCheck label="Tỉnh / Thành phố" options={cities} selected={filters.cities} onChange={v => set({ cities: v })} />
             )}
-
-            <SalaryRange small
-              salaryMin={filters.salaryMin} salaryMax={filters.salaryMax}
+            <SalaryRange small salaryMin={filters.salaryMin} salaryMax={filters.salaryMax}
               setSalaryMin={v => set({ salaryMin: v })} setSalaryMax={v => set({ salaryMax: v })} />
-
           </div>
         </>
       )}
@@ -196,19 +185,22 @@ function FilterPopup({ open, onClose, onApply, initial, cities }: {
   const set = (patch: Partial<FilterState>) => setLocal(prev => ({ ...prev, ...patch }));
 
   useEffect(() => { if (open) setLocal(initial); }, [open]);
-  useEffect(() => { document.body.style.overflow = open ? 'hidden' : ''; return () => { document.body.style.overflow = ''; }; }, [open]);
+  useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
 
   if (!open) return null;
 
   const activeCount = local.statuses.length + local.types.length + local.cities.length
     + (local.salaryMin ? 1 : 0) + (local.salaryMax ? 1 : 0);
 
-  const toggle = (field: 'statuses'|'types'|'cities', val: string) => {
+  const toggle = (field: 'statuses' | 'types' | 'cities', val: string) => {
     const cur = local[field] as string[];
     set({ [field]: cur.includes(val) ? cur.filter(v => v !== val) : [...cur, val] });
   };
 
-  const Chip = ({ field, val }: { field: 'statuses'|'types'|'cities'; val: string }) => {
+  const Chip = ({ field, val }: { field: 'statuses' | 'types' | 'cities'; val: string }) => {
     const active = (local[field] as string[]).includes(val);
     return (
       <button onClick={() => toggle(field, val)}
@@ -222,15 +214,11 @@ function FilterPopup({ open, onClose, onApply, initial, cities }: {
     <div className="sm:hidden fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[85vh] flex flex-col">
-
         <div className="flex items-center justify-between px-4 py-3 border-b bg-orange-600 rounded-t-2xl flex-shrink-0">
           <span className="text-white font-black text-sm">Bộ lọc & Sắp xếp</span>
           <button onClick={onClose} className="text-orange-200 hover:text-white text-xl leading-none">✕</button>
         </div>
-
         <div className="flex-1 overflow-y-auto p-4 space-y-5">
-
-          {/* Sắp xếp */}
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Sắp xếp</p>
             <div className="grid grid-cols-2 gap-2">
@@ -242,24 +230,18 @@ function FilterPopup({ open, onClose, onApply, initial, cities }: {
               ))}
             </div>
           </div>
-
-          {/* Trạng thái */}
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Trạng thái</p>
             <div className="grid grid-cols-2 gap-2">
               {Object.keys(statusConfig).map(s => <Chip key={s} field="statuses" val={s} />)}
             </div>
           </div>
-
-          {/* Loại dự án */}
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Loại dự án</p>
             <div className="grid grid-cols-2 gap-2">
               {['Recruiting','Outsourcing'].map(t => <Chip key={t} field="types" val={t} />)}
             </div>
           </div>
-
-          {/* Tỉnh thành */}
           {cities.length > 0 && (
             <div>
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Tỉnh / Thành phố</p>
@@ -268,14 +250,9 @@ function FilterPopup({ open, onClose, onApply, initial, cities }: {
               </div>
             </div>
           )}
-
-          {/* Khoảng lương */}
-          <SalaryRange
-            salaryMin={local.salaryMin} salaryMax={local.salaryMax}
+          <SalaryRange salaryMin={local.salaryMin} salaryMax={local.salaryMax}
             setSalaryMin={v => set({ salaryMin: v })} setSalaryMax={v => set({ salaryMax: v })} />
-
         </div>
-
         <div className="px-4 pb-4 pt-3 border-t flex gap-2 flex-shrink-0">
           <button onClick={() => setLocal(DEFAULT_FILTERS)}
             className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-500 font-bold text-sm hover:bg-gray-50 transition">
@@ -322,10 +299,10 @@ function ProjectCard({ project }: { project: Project }) {
       {positions.length > 0 && (
         <div className="px-4 pb-3">
           {positions.map((pos, i) => (
-<div key={i} className="flex items-start gap-2 text-gray-800 font-bold text-[13px] leading-snug mb-1.5 last:mb-0">
-  <span className="w-1.5 h-1.5 rounded-full bg-orange-400 flex-shrink-0 mt-[5px]" />
-  <span>{pos}</span>
-</div>
+            <div key={i} className="flex items-start gap-2 text-gray-800 font-bold text-[13px] leading-snug mb-1.5 last:mb-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-orange-400 flex-shrink-0 mt-[5px]" />
+              <span>{pos}</span>
+            </div>
           ))}
         </div>
       )}
@@ -371,13 +348,21 @@ function SkeletonCard() {
       <div className="p-4 flex gap-3">
         <div className="w-12 h-12 bg-gray-100 rounded-xl flex-shrink-0" />
         <div className="flex-1 space-y-2 pt-1">
-          <div className="h-4 bg-gray-100 rounded w-3/4" /><div className="h-3 bg-gray-100 rounded w-1/2" /><div className="h-3 bg-gray-100 rounded w-1/3" />
+          <div className="h-4 bg-gray-100 rounded w-3/4" />
+          <div className="h-3 bg-gray-100 rounded w-1/2" />
+          <div className="h-3 bg-gray-100 rounded w-1/3" />
         </div>
       </div>
-      <div className="px-4 pb-3 space-y-1.5"><div className="h-4 bg-gray-100 rounded w-full" /><div className="h-4 bg-gray-100 rounded w-2/3" /></div>
+      <div className="px-4 pb-3 space-y-1.5">
+        <div className="h-4 bg-gray-100 rounded w-full" />
+        <div className="h-4 bg-gray-100 rounded w-2/3" />
+      </div>
       <div className="mx-4 border-t border-gray-100" />
       <div className="px-4 py-3"><div className="h-9 bg-blue-50 rounded-xl" /></div>
-      <div className="px-4 pb-4 flex gap-2"><div className="h-5 bg-gray-100 rounded-full w-20" /><div className="h-5 bg-gray-100 rounded-full w-16" /></div>
+      <div className="px-4 pb-4 flex gap-2">
+        <div className="h-5 bg-gray-100 rounded-full w-20" />
+        <div className="h-5 bg-gray-100 rounded-full w-16" />
+      </div>
     </div>
   );
 }
@@ -394,16 +379,20 @@ function ProjectsContent() {
 
   useEffect(() => {
     (async () => {
-      setLoading(true); setError(null);
+      setLoading(true);
+      setError(null);
       try {
-        const { data, error } = await supabase
+        const { data, error: fetchError } = await supabase
           .from('projects')
-          .select('id,project_id,...')
+          .select('id,project_id,project,project_type,company,address_city,position,job_type,salary_min,salary_max,status,highlight_info,headcount,tags,hiring_form,deploy_start,deploy_end')
           .order('created_at', { ascending: false });
-        if (error) throw error;
-        setProjects(data || []);
-      } catch { setError('Không thể tải danh sách dự án. Vui lòng thử lại.'); }
-      finally { setLoading(false); }
+        if (fetchError) throw fetchError;
+        setProjects((data as Project[]) || []);
+      } catch {
+        setError('Không thể tải danh sách dự án. Vui lòng thử lại.');
+      } finally {
+        setLoading(false);
+      }
     })();
   }, []);
 
@@ -413,7 +402,13 @@ function ProjectsContent() {
     let r = [...projects];
     if (search.trim()) {
       const s = search.toLowerCase();
-      r = r.filter(p => p.project?.toLowerCase().includes(s) || p.company?.toLowerCase().includes(s) || p.project_id?.toLowerCase().includes(s) || p.position?.toLowerCase().includes(s) || p.address_city?.toLowerCase().includes(s));
+      r = r.filter(p =>
+        p.project?.toLowerCase().includes(s) ||
+        p.company?.toLowerCase().includes(s) ||
+        p.project_id?.toLowerCase().includes(s) ||
+        p.position?.toLowerCase().includes(s) ||
+        p.address_city?.toLowerCase().includes(s)
+      );
     }
     if (filters.statuses.length > 0) r = r.filter(p => filters.statuses.includes(p.status));
     if (filters.types.length > 0)    r = r.filter(p => filters.types.includes(p.project_type));
@@ -421,11 +416,7 @@ function ProjectsContent() {
     if (filters.salaryMin)           r = r.filter(p => p.salary_max != null && p.salary_max >= Number(filters.salaryMin));
     if (filters.salaryMax)           r = r.filter(p => p.salary_min != null && p.salary_min <= Number(filters.salaryMax));
 
-    r.sort((a, b) => {
-      const diff = tagPriority(b.tags) - tagPriority(a.tags);
-      if (diff !== 0) return diff;
-      return filters.sortBy === 'oldest' ? 0 : 0; // created_at đã sort từ Supabase; oldest thì reverse
-    });
+    r.sort((a, b) => tagPriority(b.tags) - tagPriority(a.tags));
     if (filters.sortBy === 'oldest') r.reverse();
     return r;
   }, [projects, search, filters]);
@@ -436,10 +427,8 @@ function ProjectsContent() {
   return (
     <div className="flex h-full bg-gray-100 overflow-hidden text-sm p-4 gap-3">
 
-      {/* PC SIDEBAR */}
       <FilterSidebar show={showFilters} filters={filters} setFilters={setFilters} cities={cities} />
 
-      {/* MAIN */}
       <div className="flex flex-col bg-white rounded-xl shadow-sm border overflow-hidden flex-1">
 
         {/* TOOLBAR */}
@@ -455,7 +444,10 @@ function ProjectsContent() {
             </div>
 
             <button
-              onClick={() => { if (typeof window !== 'undefined' && window.innerWidth >= 640) setShowFilters(v => !v); else setShowPopup(true); }}
+              onClick={() => {
+                if (typeof window !== 'undefined' && window.innerWidth >= 640) setShowFilters(v => !v);
+                else setShowPopup(true);
+              }}
               className={`relative flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold transition
                 ${showFilters || activeCount > 0 ? 'bg-orange-500 text-white border-orange-500' : 'bg-white hover:bg-orange-50 text-gray-600 border-gray-200'}`}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
@@ -467,13 +459,13 @@ function ProjectsContent() {
               )}
             </button>
 
-<Link href="/projects/new"
-  className="flex items-center justify-center gap-1.5 px-3 py-2 sm:px-3 rounded-lg border text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 border-orange-600 transition">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="w-3.5 h-3.5 flex-shrink-0">
-    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-  </svg>
-  <span className="hidden sm:inline">Thêm dự án</span>
-</Link>
+            <Link href="/projects/new"
+              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 border-orange-600 transition">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="w-3.5 h-3.5 flex-shrink-0">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              <span className="hidden sm:inline">Thêm dự án</span>
+            </Link>
           </div>
           {!loading && (
             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2">
@@ -484,8 +476,17 @@ function ProjectsContent() {
 
         {/* GRID */}
         <div className="flex-1 overflow-y-auto p-4">
-          {error && <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-600 text-sm text-center">{error}<button onClick={() => window.location.reload()} className="ml-2 underline font-bold">Thử lại</button></div>}
-          {loading && <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">{Array.from({length:6}).map((_,i)=><SkeletonCard key={i}/>)}</div>}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-600 text-sm text-center">
+              {error}
+              <button onClick={() => window.location.reload()} className="ml-2 underline font-bold">Thử lại</button>
+            </div>
+          )}
+          {loading && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+            </div>
+          )}
           {!loading && !error && filtered.length === 0 && (
             <div className="flex flex-col items-center justify-center py-24 text-gray-400">
               <span className="text-5xl mb-4">🔍</span>
@@ -501,7 +502,6 @@ function ProjectsContent() {
         </div>
       </div>
 
-      {/* MOBILE POPUP */}
       <FilterPopup open={showPopup} onClose={() => setShowPopup(false)}
         onApply={setFilters} initial={filters} cities={cities} />
     </div>
