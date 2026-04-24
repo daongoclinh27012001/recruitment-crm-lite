@@ -310,9 +310,7 @@ function ProjectCard({ project }: { project: Project }) {
 
       <div className="p-4 pb-3 flex gap-3 items-start">
         <div className="flex-shrink-0 w-12 h-12 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden">
-          {project.icon_job
-            ? <img src={project.icon_job} alt={project.company} className="w-full h-full object-contain p-1" />
-            : <span className="text-xl">{project.project_type === 'Recruiting' ? '🏭' : '🏢'}</span>}
+          <span className="text-xl">{project.project_type === 'Recruiting' ? '🏭' : '🏢'}</span>
         </div>
         <div className="flex-1 min-w-0 pr-16">
           <h3 className="font-bold text-gray-900 text-sm leading-tight line-clamp-2 group-hover:text-orange-700 transition-colors">{project.project}</h3>
