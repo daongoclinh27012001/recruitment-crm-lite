@@ -26,7 +26,6 @@ interface Project {
   status: string;
   highlight_info: string | null;
   headcount: number | null;
-  icon_job: string | null;
   tags: string | null;
   hiring_form: string | null;
   deploy_start: string | null;
@@ -401,9 +400,9 @@ function ProjectsContent() {
       try {
         const { data, error } = await supabase
           .from('projects')
-          .select('id,project_id,project,project_type,company,address_city,position,job_type,salary_min,salary_max,status,highlight_info,headcount,tags,hiring_form,deploy_start,deploy_end')
+          .select('id,project_id,...')
           .order('created_at', { ascending: false });
-        if (e) throw e;
+        if (error) throw error;
         setProjects(data || []);
       } catch { setError('Không thể tải danh sách dự án. Vui lòng thử lại.'); }
       finally { setLoading(false); }
