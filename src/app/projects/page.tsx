@@ -399,9 +399,9 @@ function ProjectsContent() {
     (async () => {
       setLoading(true); setError(null);
       try {
-        const { data, error: e } = await supabase
+        const { data, error } = await supabase
           .from('projects')
-          .select('id,project_id,project,project_type,company,address_city,position,job_type,salary_min,salary_max,status,highlight_info,headcount,icon_job,tags,hiring_form,deploy_start,deploy_end')
+          .select('id,project_id,project,project_type,company,address_city,position,job_type,salary_min,salary_max,status,highlight_info,headcount,tags,hiring_form,deploy_start,deploy_end')
           .order('created_at', { ascending: false });
         if (e) throw e;
         setProjects(data || []);
