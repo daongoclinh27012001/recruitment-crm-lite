@@ -8,7 +8,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { MASTER_DATA } from '@/constants/masterData';
 import { API_CONFIG } from '@/constants/masterData';
 import * as XLSX from 'xlsx';
-import { getOnboardAssignments } from '@/constants/onboardDefaults';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -518,7 +517,12 @@ const fetchDetail = async (id: string) => {
           newData.on_job_30_day_date = addDays(base, 30);
           newData.on_job_1_day = false; newData.on_job_3_day = false; newData.on_job_7_day = false; newData.on_job_30_day = false;
           newData.eligible_for_acceptance = false; newData.is_still_working_247 = true; newData.is_still_working_official = true;
-          Object.assign(newData, getOnboardAssignments(newData.project || ''));
+          newData.assigned_adminonsite_user = '';
+          newData.assigned_adminonsite_user_name = '';
+          newData.assigned_adminonsite_user_group = '';
+          newData.assigned_247_user = '';
+          newData.assigned_247_user_name = '';
+          newData.assigned_247_user_group = '';
 } else if (field === 'onboard' && !newData.onboard) {
   newData.on_job_1_day_date = ''; newData.on_job_3_day_date = ''; newData.on_job_7_day_date = ''; newData.on_job_30_day_date = '';
   newData.on_job_1_day = false; newData.on_job_3_day = false; newData.on_job_7_day = false; newData.on_job_30_day = false;
