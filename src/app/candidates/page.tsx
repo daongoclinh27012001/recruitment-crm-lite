@@ -6,9 +6,9 @@ import AppLayout from '@/components/AppLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { MASTER_DATA } from '@/constants/masterData';
-import { API_CONFIG } from '@/constants/masterData';
 import * as XLSX from 'xlsx';
 import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/contexts/AuthContext';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -340,23 +340,25 @@ useEffect(() => {
     if (savedCols) setColumns(JSON.parse(savedCols));
     if (savedFrozen) setFrozenCount(parseInt(savedFrozen));
   }, []);
+// THAY BẰNG
+const fetchAllCandidates = async () => {
+  if (isAuthLoading || !user_group) return;
+  setListLoading(true);
+  try {
+    const { data, error } = await supabase
+      .from('candidates')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    setAllCandidates(data || []);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setListLoading(false);
+  }
+};
 
-  const fetchAllCandidates = async () => {
-    if (isAuthLoading || !user_group || !user_id) return;
-    setListLoading(true);
-    try {
-      const res = await fetch(API_CONFIG.CANDIDATE_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'list', sort: 'newest', user_group, user_id }),
-      });
-      const data = await res.json();
-      if (data.success) setAllCandidates(data.data || []);
-    } catch (err) { console.error(err); }
-    finally { setListLoading(false); }
-  };
-
-  useEffect(() => { if (user_group && user_id) fetchAllCandidates(); }, [user_group, user_id, isAuthLoading]);
+  useEffect(() => { if (user_group) fetchAllCandidates(); }, [user_group, isAuthLoading]);
   useEffect(() => { setCurrentPage(1); }, [search, filters]);
   // Đọc ?project=... từ URL khi trang load
   useEffect(() => {
