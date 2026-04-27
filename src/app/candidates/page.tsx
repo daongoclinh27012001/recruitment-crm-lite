@@ -7,13 +7,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { MASTER_DATA } from '@/constants/masterData';
 import * as XLSX from 'xlsx';
-import { createClient } from '@supabase/supabase-js';
 import { supabase } from '@/contexts/AuthContext';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 interface ProjectOption {
   project_id: string;
