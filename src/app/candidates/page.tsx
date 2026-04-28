@@ -463,13 +463,13 @@ const fetchDetail = async (id: string) => {
   setMobileShowDetail(true);
   setDetailLoading(true);
   try {
-    const res = await fetch(API_CONFIG.CANDIDATE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'get', id, user_group, user_id }),
-    });
-    const data = await res.json();
-    if (data.success) { setFormData(data.data); setOriginalData(data.data); }
+    const { data, error } = await supabase
+      .from('candidates')
+      .select('*')
+      .eq('candidate_id', id)
+      .single();
+    if (error) throw error;
+    if (data) { setFormData(data); setOriginalData(data); }
   } catch (err) { console.error(err); }
   finally { setDetailLoading(false); }
 };
@@ -572,12 +572,14 @@ if (!/^0\d{9}$/.test(String(formData.phone || ''))) return alert('Số điện t
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) return alert('Email không đúng định dạng');
     setIsSaving(true);
     try {
-      const res = await fetch(API_CONFIG.CANDIDATE_URL, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'update', user_group, user_id, id: formData.candidate_id, updates: formData }),
-      });
-      const data = await res.json();
-      if (data.success) { alert('Lưu thành công!'); setOriginalData(formData); }
+      const { error } = await supabase
+        .from('candidates')
+        .update({ ...formData, last_updated_at: new Date().toISOString() })
+        .eq('candidate_id', formData.candidate_id);
+      if (error) throw error;
+      alert('Lưu thành công!');
+      setOriginalData(formData);
+      fetchAllCandidates();
     } catch { alert('Lỗi kết nối'); }
     finally { setIsSaving(false); }
   };
@@ -598,16 +600,15 @@ handleChange('tags', String(formData.tags).split(',').map((t: string) => t.trim(
     if (!window.confirm(`Bạn có chắc chắn muốn xóa ứng viên "${formData.candidate_name}" không?\nHành động này không thể hoàn tác!`)) return;
     setIsSaving(true);
     try {
-      const res = await fetch(API_CONFIG.CANDIDATE_URL, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete', user_group, user_id, id: formData.candidate_id }),
-      });
-      const data = await res.json();
-      if (data.success) {
+        const { error } = await supabase
+          .from('candidates')
+          .delete()
+          .eq('candidate_id', formData.candidate_id);
+        if (error) throw error;
         alert('Đã xóa ứng viên thành công!');
         setAllCandidates(prev => prev.filter(c => c.candidate_id !== formData.candidate_id));
-        setSelectedId(null); setFormData(null);
-      } else alert('Xóa thất bại: ' + (data.message || 'Lỗi không xác định'));
+        setSelectedId(null);
+        setFormData(null);
     } catch { alert('Lỗi kết nối đến hệ thống'); }
     finally { setIsSaving(false); }
   };
