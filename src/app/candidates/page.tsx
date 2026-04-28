@@ -5,6 +5,7 @@ import Link from 'next/link';
 import AppLayout from '@/components/AppLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
+import { can, CandidatePermissions } from '@/constants/permissions';
 import { MASTER_DATA } from '@/constants/masterData';
 import * as XLSX from 'xlsx';
 import { supabase } from '@/contexts/AuthContext';
@@ -294,7 +295,9 @@ function FilterPopup({ open, onClose, onApply, initial, statusOptions, uniquePro
 }
 function CandidatesContent() {
   const { user_group, user_id, isLoading: isAuthLoading } = useAuth();
-  const canEditSource = user_group?.toLowerCase() === 'admin';
+  const canEditSource  = can(user_group, CandidatePermissions.editSource);
+  const canEdit        = can(user_group, CandidatePermissions.edit);
+  const canDelete      = can(user_group, CandidatePermissions.delete);
 
   const [allCandidates, setAllCandidates] = useState<Candidate[]>([]);
   const [listLoading, setListLoading] = useState(true);
@@ -869,28 +872,35 @@ handleChange('tags', String(formData.tags).split(',').map((t: string) => t.trim(
                   <button onClick={() => setSelectedId(null)} className="p-2 hover:bg-gray-200 rounded-full transition">✕</button>
                   <div>
                     <input
-                      className="font-bold text-base uppercase text-orange-800 leading-none bg-transparent border-b border-transparent hover:border-orange-300 focus:border-orange-600 outline-none w-full"
+                      className={`font-bold text-base uppercase text-orange-800 leading-none bg-transparent border-b border-transparent outline-none w-full
+                        ${canEdit ? 'hover:border-orange-300 focus:border-orange-600' : 'cursor-default'}`}
                       value={formData.candidate_name}
-                      onChange={e => handleChange('candidate_name', e.target.value)}
+                      onChange={e => canEdit && handleChange('candidate_name', e.target.value)}
+                      readOnly={!canEdit}
                     />
                     <span className="text-[12px] font-mono text-gray-400">{formData.candidate_id}</span>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  {user_group?.toLowerCase() === 'admin' && (
+                  {canDelete && (
                     <button onClick={handleDelete} disabled={isSaving}
                       className="px-4 py-2 rounded-xl font-bold transition border border-red-200 text-red-600 bg-red-50 hover:bg-red-600 hover:text-white shadow-sm whitespace-nowrap">
                       🗑️ XÓA
                     </button>
                   )}
-                  <button onClick={handleSave} disabled={isSaving || !hasChanges}
+                  <button onClick={handleSave} disabled={isSaving || !hasChanges || !canEdit}
                     className={`px-6 py-2 rounded-xl font-bold transition shadow-lg ${hasChanges ? 'bg-green-600 text-white hover:bg-green-700 shadow-green-100' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
                     <span className="sm:hidden">{isSaving ? '...' : 'Lưu'}</span>
                     <span className="hidden sm:inline">{isSaving ? 'ĐANG LƯU...' : 'LƯU THAY ĐỔI'}</span>
                   </button>
                 </div>
               </div>
-
+              {/* Banner chỉ xem cho vendor */}
+              {!canEdit && (
+                <div className="mx-4 mt-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-[11px] font-bold flex items-center gap-2">
+                  👁️ Bạn chỉ có quyền xem, không thể chỉnh sửa thông tin ứng viên.
+                </div>
+              )}
               {/* Body Detail */}
               <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-6 sm:space-y-8 pb-24 scrollbar-thin">
 
